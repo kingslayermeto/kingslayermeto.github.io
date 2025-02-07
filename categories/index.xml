@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>Categories on 野蔷薇的呼吸</title>
+        <link>https://kingslayermeto.githun.io/categories/</link>
+        <description>Recent content in Categories on 野蔷薇的呼吸</description>
+        <generator>Hugo -- gohugo.io</generator>
+        <language>zh-cn</language>
+        <copyright>kingslayermeto</copyright>
+        <lastBuildDate>Thu, 06 Feb 2025 15:00:00 +0800</lastBuildDate><atom:link href="https://kingslayermeto.githun.io/categories/index.xml" rel="self" type="application/rss+xml" /><item>
+        <title>Linux</title>
+        <link>https://kingslayermeto.githun.io/categories/linux/</link>
+        <pubDate>Thu, 06 Feb 2025 15:00:00 +0800</pubDate>
+        
+        <guid>https://kingslayermeto.githun.io/categories/linux/</guid>
+        <description></description>
+        </item>
+        <item>
+        <title>Zabbix</title>
+        <link>https://kingslayermeto.githun.io/categories/zabbix/</link>
+        <pubDate>Thu, 06 Feb 2025 14:59:00 +0800</pubDate>
+        
+        <guid>https://kingslayermeto.githun.io/categories/zabbix/</guid>
+        <description></description>
+        </item>
+        <item>
+        <title>Moodle</title>
+        <link>https://kingslayermeto.githun.io/categories/moodle/</link>
+        <pubDate>Thu, 06 Feb 2025 14:57:00 +0800</pubDate>
+        
+        <guid>https://kingslayermeto.githun.io/categories/moodle/</guid>
+        <description></description>
+        </item>
+        <item>
+        <title>Yum</title>
+        <link>https://kingslayermeto.githun.io/categories/yum/</link>
+        <pubDate>Thu, 06 Feb 2025 14:56:00 +0800</pubDate>
+        
+        <guid>https://kingslayermeto.githun.io/categories/yum/</guid>
+        <description></description>
+        </item>
+        <item>
+        <title>Esxi</title>
+        <link>https://kingslayermeto.githun.io/categories/esxi/</link>
+        <pubDate>Thu, 06 Feb 2025 14:55:00 +0800</pubDate>
+        
+        <guid>https://kingslayermeto.githun.io/categories/esxi/</guid>
+        <description></description>
+        </item>
+        
+    </channel>
+</rss>
