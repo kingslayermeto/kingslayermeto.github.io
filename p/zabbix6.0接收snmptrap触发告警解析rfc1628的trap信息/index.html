@@ -317,15 +317,18 @@
 </span></span><span class="line"><span class="cl">chmod a+x /usr/bin/zabbix_trap_receiver.pl
 </span></span></code></pre></td></tr></table>
 </div>
-</div><p>配置zabbix服务器的snmptrap配置并启动(以团体字为public为例)
-vim /etc/snmp/snmptrapd.conf</p>
+</div><p>配置zabbix服务器的snmptrap配置并启动(以团体字为public为例)</p>
+<p>#某些设备(如山特UPS)只能发指定团体字(vendor-community)的trap,因此可能写多行authCommunity</p>
+<p>vim /etc/snmp/snmptrapd.conf</p>
 <div class="highlight"><div class="chroma">
 <table class="lntable"><tr><td class="lntd">
 <pre tabindex="0" class="chroma"><code><span class="lnt">1
 </span><span class="lnt">2
+</span><span class="lnt">3
 </span></code></pre></td>
 <td class="lntd">
 <pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">authCommunity log,execute,net public
+</span></span><span class="line"><span class="cl">authCommunity log,execute,net vendor-community
 </span></span><span class="line"><span class="cl">perl do &#34;/usr/bin/zabbix_trap_receiver.pl&#34;
 </span></span></code></pre></td></tr></table>
 </div>
