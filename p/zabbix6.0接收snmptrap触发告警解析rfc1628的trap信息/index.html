@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content="1.配置snmptrap 安装snmp相关工具\n1 yum install -y net-snmp* 官网下载源码，复制misc/snmptrap/zabbix_trap_receiver.pl，确认其中SNMPTrapperFile路径并授权\n">
+<title>zabbix6.0接收snmptrap,触发告警,解析RFC1628的trap信息</title>
+
+<link rel='canonical' href='https://kingslayermeto.githun.io/p/zabbix6.0%E6%8E%A5%E6%94%B6snmptrap%E8%A7%A6%E5%8F%91%E5%91%8A%E8%AD%A6%E8%A7%A3%E6%9E%90rfc1628%E7%9A%84trap%E4%BF%A1%E6%81%AF/'>
+
+<link rel="stylesheet" href="/scss/style.min.663803bebe609202d5b39d848f2d7c2dc8b598a2d879efa079fa88893d29c49c.css"><meta property='og:title' content="zabbix6.0接收snmptrap,触发告警,解析RFC1628的trap信息">
+<meta property='og:description' content="1.配置snmptrap 安装snmp相关工具\n1 yum install -y net-snmp* 官网下载源码，复制misc/snmptrap/zabbix_trap_receiver.pl，确认其中SNMPTrapperFile路径并授权\n">
+<meta property='og:url' content='https://kingslayermeto.githun.io/p/zabbix6.0%E6%8E%A5%E6%94%B6snmptrap%E8%A7%A6%E5%8F%91%E5%91%8A%E8%AD%A6%E8%A7%A3%E6%9E%90rfc1628%E7%9A%84trap%E4%BF%A1%E6%81%AF/'>
+<meta property='og:site_name' content='野蔷薇的呼吸'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:published_time' content='2025-02-16T14:00:00&#43;08:00'/><meta property='article:modified_time' content='2025-02-16T14:00:00&#43;08:00'/>
+<meta name="twitter:title" content="zabbix6.0接收snmptrap,触发告警,解析RFC1628的trap信息">
+<meta name="twitter:description" content="1.配置snmptrap 安装snmp相关工具\n1 yum install -y net-snmp* 官网下载源码，复制misc/snmptrap/zabbix_trap_receiver.pl，确认其中SNMPTrapperFile路径并授权\n">
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="切换菜单">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="/">
+                
+                    
+                    
+                    
+                        
+                        <img src="/img/avatar_hu_399efe17c10eade1.png" width="300"
+                            height="300" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="/">野蔷薇的呼吸</a></h1>
+            <h2 class="site-description">Hello!</h2>
+        </div>
+    </header><ol class="menu-social">
+            
+                <li>
+                    <a 
+                        href='https://github.com/kingslayermeto'
+                        target="_blank"
+                        title="GitHub"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>主页</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E5%85%B3%E4%BA%8E/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-user" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="7" r="4" />
+  <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+</svg>
+
+
+
+                
+                <span>关于</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>归档</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>搜索</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='/%E9%93%BE%E6%8E%A5/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>链接</span>
+            </a>
+        </li>
+        
+        <li class="menu-bottom-section">
+            <ol class="menu">
+
+                
+                    <li id="dark-mode-toggle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                        <span>暗色模式</span>
+                    </li>
+                
+            </ol>
+        </li>
+    </ol>
+</aside>
+
+    
+
+            <main class="main full-width">
+    <article class="main-article">
+    <header class="article-header">
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="/categories/zabbix/" >
+                Zabbix
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="/p/zabbix6.0%E6%8E%A5%E6%94%B6snmptrap%E8%A7%A6%E5%8F%91%E5%91%8A%E8%AD%A6%E8%A7%A3%E6%9E%90rfc1628%E7%9A%84trap%E4%BF%A1%E6%81%AF/">zabbix6.0接收snmptrap,触发告警,解析RFC1628的trap信息</a>
+        </h2>
+    
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Feb 16, 2025</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    阅读时长: 4 分钟
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <p>1.配置snmptrap
+安装snmp相关工具</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">yum install -y net-snmp*
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>官网下载源码，复制misc/snmptrap/zabbix_trap_receiver.pl，确认其中SNMPTrapperFile路径并授权</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">vim /usr/bin/zabbix_trap_receiver.pl
+</span></span><span class="line"><span class="cl">$SNMPTrapperFile = &#39;/tmp/zabbix_traps.tmp&#39;;
+</span></span><span class="line"><span class="cl">chmod a+x /usr/bin/zabbix_trap_receiver.pl
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>配置zabbix服务器的snmptrap配置并启动(以团体字为public为例)
+vim /etc/snmp/snmptrapd.conf</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">authCommunity log,execute,net public
+</span></span><span class="line"><span class="cl">perl do &#34;/usr/bin/zabbix_trap_receiver.pl&#34;
+</span></span></code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">systemctl restart snmptrapd
+</span></span><span class="line"><span class="cl">systemctl enable snmptrapd
+</span></span><span class="line"><span class="cl">systemctl status snmptrapd
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>配置zabbix服务器的zabbix_server.conf配置。启动snmptrap,修改SNMPTrapperFile，保持与zabbix_trap_receiver.pl中一致</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">StartSNMPTrapper=1
+</span></span><span class="line"><span class="cl">SNMPTrapperFile=/tmp/zabbix_traps.tmp
+</span></span></code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">systemctl restart zabbix-server
+</span></span><span class="line"><span class="cl">systemctl status zabbix-server
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>zabbix服务器防火墙放开snmptrap端口</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-gdscript3" data-lang="gdscript3"><span class="line"><span class="cl"><span class="n">firewall</span><span class="o">-</span><span class="n">cmd</span> <span class="o">--</span><span class="n">permanent</span> <span class="o">--</span><span class="n">zone</span><span class="o">=</span><span class="n">public</span> <span class="o">--</span><span class="n">add</span><span class="o">-</span><span class="n">service</span><span class="o">=</span><span class="n">snmptrap</span>
+</span></span><span class="line"><span class="cl"><span class="n">firewall</span><span class="o">-</span><span class="n">cmd</span> <span class="o">--</span><span class="n">reload</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>snmptrap测试
+zabbix服务器上测试</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">snmptrap -v 2c -c public 127.0.0.1 &#39;&#39; .1.3.6.1.2.1.33.1.6.3.21 .1.3.6.1.2.1.33.1.6.3.21 s &#39;snmptrap test-v2&#39;
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>客户端测试</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">snmptrap -v 2c -c public zabbix-ip &#39;&#39; .1.3.6.1.2.1.33.1.6.3.21 .1.3.6.1.2.1.33.1.6.3.21 s &#39;snmptrap test-v2&#39;
+</span></span><span class="line"><span class="cl">snmptrap -v 1 -c public zabbix-ip 1.3.6.1.2.1.33 zabbix-ip 6 0 999 1.3.6.1.2.1.33.1.6.3.21 s  snmptrap-test-v1
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>验证</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">tail /tmp/zabbix_traps.tmp
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>2.配置告警(以模板UPS RFC 1628 SNMP为例)
+创建监控项</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">名称：SNMP traps (fallback)
+</span></span><span class="line"><span class="cl">类型：SNMP trap
+</span></span><span class="line"><span class="cl">键值：snmptrap.fallback
+</span></span><span class="line"><span class="cl">信息类型：日志
+</span></span><span class="line"><span class="cl">日志时间格式：hh:mm:sszyyyy/MM/dd
+</span></span><span class="line"><span class="cl"># 键值配置为snmptrap.fallback，可以接收所有未配置成SNMPtrap监控项的设备发出的trap信息
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>创建触发器,只要接受到新的trap信息就触发告警</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">触发器名称 snmptrap event
+</span></span><span class="line"><span class="cl">表达式 length(last(/UPS RFC 1628 SNMP/snmptrap.fallback))&gt;0
+</span></span><span class="line"><span class="cl">允许手动关闭
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>3.解析trap信息,配置准确告警（以RFC1628.MIB为例)
+以下是进阶配置，将告警信息中的MIB oid翻译为对应的name，以触发准确的trap告警。
+确定mib文件路径</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">net-snmp-config --default-mibdirs
+</span></span><span class="line"><span class="cl">/root/.snmp/mibs:/usr/share/snmp/mibs
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>将RFC1628.MIB文件上传至/usr/share/snmp/mibs,格式可以保持RFC1628.MIB,也可以RFC1628-MIB.txt.</p>
+<p>snmptrap此时仍未解析，客户端测试（其中.1.3.6.1.2.1.33.1.6.3.21=upsAlarmAwaitingPower):</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">snmptrap -v 1 -c public zabbix-ip 1.3.6.1.2.1.33 zabbix-ip 6 0 999 1.3.6.1.2.1.33.1.6.3.21 s  snmptrap-test-v1
+</span></span><span class="line"><span class="cl">snmptrap -v 2c -c public zabbix-ip &#39;&#39; .1.3.6.1.2.1.33.1.6.3.21 .1.3.6.1.2.1.33.1.6.3.21 s &#39;snmptrap test-v2&#39;
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>zabbix告警数据:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">SNMPv2-SMI::mib-2.33.1.6.3.21  type=4  value=STRING: &#34;snmptrap-test-v1&#34;
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>修改snmptrapd配置文件，加载新增的MIB库或全部MIB库</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">vim /usr/lib/systemd/system/snmptrapd.service
+</span></span></code></pre></td></tr></table>
+</div>
+</div><div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">ExecStart=/usr/sbin/snmptrapd $OPTIONS -f -m /usr/share/snmp/mibs/RFC1628.MIB
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>或</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">ExecStart=/usr/sbin/snmptrapd $OPTIONS -f -m ALL
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>重启snmptrapd</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-gdscript3" data-lang="gdscript3"><span class="line"><span class="cl"><span class="n">systemctl</span> <span class="n">daemon</span><span class="o">-</span><span class="n">reload</span>
+</span></span><span class="line"><span class="cl"><span class="n">systemctl</span> <span class="n">restart</span> <span class="n">snmptrapd</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>客户端重新测试</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">snmptrap -v 1 -c public zabbix-ip 1.3.6.1.2.1.33 zabbix-ip 6 0 999 1.3.6.1.2.1.33.1.6.3.21 s  snmptrap-test-v1
+</span></span><span class="line"><span class="cl">snmptrap -v 2c -c public zabbix-ip &#39;&#39; .1.3.6.1.2.1.33.1.6.3.21 .1.3.6.1.2.1.33.1.6.3.21 s &#39;snmptrap test-v2&#39;
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>zabbix告警数据可以看到upsAlarmAwaitingPower字段</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">UPS-MIB::upsAlarmAwaitingPower type=4  value=STRING: &#34;snmptrap-test-v1&#34;
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>4.创建准确解析的trap监控项
+创建监控项</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span><span class="lnt">6
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">名称：SNMP traps (upsAlarmAwaitingPower)
+</span></span><span class="line"><span class="cl">类型：SNMP trap
+</span></span><span class="line"><span class="cl">键值：snmptrap[UPS-MIB::upsAlarmAwaitingPower]
+</span></span><span class="line"><span class="cl">信息类型：日志
+</span></span><span class="line"><span class="cl">日志时间格式：hh:mm:sszyyyy/MM/dd
+</span></span><span class="line"><span class="cl"># 键值配置为snmptrap[UPS-MIB::upsAlarmAwaitingPower]，可以接收所有匹配了UPS-MIB::upsAlarmAwaitingPower的trap信息
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>创建触发器,只要接受到新的UPS-MIB::upsAlarmAwaitingPower trap信息就触发告警</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl">触发器名称 snmptrap event-upsAlarmAwaitingPower
+</span></span><span class="line"><span class="cl">表达式 length(last(/UPS RFC 1628 SNMP/snmptrap[UPS-MIB::upsAlarmAwaitingPower]))&gt;0
+</span></span><span class="line"><span class="cl">允许手动关闭
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>附：RFC1628 Trap</p>
+<div class="table-wrapper"><table>
+  <thead>
+      <tr>
+          <th>TRAPS</th>
+          <th>Description</th>
+          <th>Comments</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>upsAlarmBatteryBad</td>
+          <td>电池故障</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.1</td>
+      </tr>
+      <tr>
+          <td>upsAlarmOnBattery</td>
+          <td>电池模式</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.2</td>
+      </tr>
+      <tr>
+          <td>upsAlarmLowBattery</td>
+          <td>电池低告警</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.3</td>
+      </tr>
+      <tr>
+          <td>upsAlarmDepletedBattery</td>
+          <td>电池未接或电池耗尽</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.4</td>
+      </tr>
+      <tr>
+          <td>upsAlarmTempBad</td>
+          <td>温度异常</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.5</td>
+      </tr>
+      <tr>
+          <td>upsAlarmInputBad</td>
+          <td>输入异常</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.6</td>
+      </tr>
+      <tr>
+          <td>upsAlarmOutputBad</td>
+          <td>输出异常</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.7</td>
+      </tr>
+      <tr>
+          <td>upsAlarmOutputOverload</td>
+          <td>输出过载</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.8</td>
+      </tr>
+      <tr>
+          <td>upsAlarmOnBypass</td>
+          <td>旁路模式</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.9</td>
+      </tr>
+      <tr>
+          <td>upsAlarmBypassBad</td>
+          <td>旁路异常</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.10</td>
+      </tr>
+      <tr>
+          <td>upsAlarmOutputOffAsRequested</td>
+          <td>按要求的UPS输出关闭</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.11</td>
+      </tr>
+      <tr>
+          <td>upsAlarmUpsOffAsRequested</td>
+          <td>按要求的UPS系统关闭</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.12</td>
+      </tr>
+      <tr>
+          <td>upsAlarmChargerFailed</td>
+          <td>充电故障</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.13</td>
+      </tr>
+      <tr>
+          <td>upsAlarmUpsOutputOff</td>
+          <td>UPS输出关闭</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.14</td>
+      </tr>
+      <tr>
+          <td>upsAlarmUpsSystemOff</td>
+          <td>UPS系统关闭</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.15</td>
+      </tr>
+      <tr>
+          <td>upsAlarmFanFailure</td>
+          <td>风扇故障</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.16</td>
+      </tr>
+      <tr>
+          <td>upsAlarmFuseFailure</td>
+          <td>保险丝熔断或故障</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.17</td>
+      </tr>
+      <tr>
+          <td>upsAlarmGeneralFault</td>
+          <td>UPS故障</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.18</td>
+      </tr>
+      <tr>
+          <td>upsAlarmDiagnosticTestFailed</td>
+          <td>测试诊断失败</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.19</td>
+      </tr>
+      <tr>
+          <td>upsAlarmCommunicationsLost</td>
+          <td>通讯失败</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.20</td>
+      </tr>
+      <tr>
+          <td>upsAlarmAwaitingPower</td>
+          <td>市电异常</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.21</td>
+      </tr>
+      <tr>
+          <td>upsAlarmShutdownPending</td>
+          <td>关机延迟</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.22</td>
+      </tr>
+      <tr>
+          <td>upsAlarmShutdownImminent</td>
+          <td>立即关机</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.23</td>
+      </tr>
+      <tr>
+          <td>upsAlarmTestInProgress</td>
+          <td>电池测试中</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.24</td>
+      </tr>
+      <tr>
+          <td>emdTemperatureTooHigh</td>
+          <td>温度过高</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.26</td>
+      </tr>
+      <tr>
+          <td>emdTemperatureTooLow</td>
+          <td>温度过低</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.27</td>
+      </tr>
+      <tr>
+          <td>emdHumidityTooHigh</td>
+          <td>湿度过高</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.28</td>
+      </tr>
+      <tr>
+          <td>emdHumidityTooLow</td>
+          <td>湿度过低</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.29</td>
+      </tr>
+      <tr>
+          <td>emdAlarm1Active</td>
+          <td>告警一使能</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.30</td>
+      </tr>
+      <tr>
+          <td>emdAlarm2Active</td>
+          <td>告警二使能</td>
+          <td>.1.3.6.1.2.1.33.1.6.3.31</td>
+      </tr>
+      <tr>
+          <td></td>
+          <td></td>
+          <td></td>
+      </tr>
+      <tr>
+          <td>读故障不是读上面的每个OID，而是读右边两个</td>
+          <td>upsAlarmDescr告警描述</td>
+          <td>.1.3.6.1.2.1.33.1.6.2.1.2</td>
+      </tr>
+      <tr>
+          <td></td>
+          <td>upsAlarmTime告警时间</td>
+          <td>.1.3.6.1.2.1.33.1.6.2.1.3</td>
+      </tr>
+  </tbody>
+</table></div>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+
+    </footer>
+
+
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">相关文章</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="">
+    <a href="/p/zabbix%E9%85%8D%E5%90%88%E7%BD%91%E5%8F%A3%E7%9F%AD%E4%BF%A1%E7%BB%88%E7%AB%AF%E5%8F%91%E9%80%81%E7%9F%AD%E4%BF%A1%E5%A4%87/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">zabbix配合网口短信终端发送短信备</h2>
+        </div>
+    </a>
+</article>
+
+            
+                
+<article class="">
+    <a href="/p/%E5%BC%80%E6%BA%90%E5%8A%A8%E7%8E%AF%E7%9B%91%E6%8E%A7%E4%BD%BF%E7%94%A8zabbix-6.0-%E7%9A%84agent2%E7%9B%91%E6%8E%A7%E7%B2%BE%E5%AF%86%E7%A9%BA%E8%B0%83%E7%AD%89modbus%E8%AE%BE%E5%A4%87/">
+        
+        
+
+        <div class="article-details">
+            <h2 class="article-title">开源动环监控——使用zabbix 6.0 的agent2监控精密空调等modbus设备</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+        2025 kingslayermeto
+    </section>
+    
+    <section class="powerby">
+        使用 <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> 构建 <br />
+        主题 <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.30.0">Stack</a></b> 由 <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> 设计
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="/ts/main.1e9a3bafd846ced4c345d084b355fb8c7bae75701c338f8a1f8a82c780137826.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>
